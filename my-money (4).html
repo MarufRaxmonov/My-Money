@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Money</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fc;
+      --card: rgba(255, 255, 255, .94);
+      --text: #171a2d;
+      --muted: #81879a;
+      --line: #eaecf3;
+      --primary: #6258e9;
+      --primary-dark: #4c43cf;
+      --green: #16a673;
+      --red: #e25757;
+      --shadow: 0 18px 45px rgba(36, 39, 78, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #11131d;
+        --card: rgba(28, 31, 45, .96);
+        --text: #f4f5fb;
+        --muted: #a2a8bb;
+        --line: #303448;
+        --shadow: 0 18px 45px rgba(0, 0, 0, .22);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { border: 0; cursor: pointer; }
+    .app { width: min(780px, 100%); margin: auto; padding: 32px 18px 52px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 27px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 21px; font-weight: 800; letter-spacing: -.7px; }
+    .brand-mark {
+      width: 44px; height: 44px; display: grid; place-items: center; color: #fff;
+      background: linear-gradient(145deg, #7368ff, #4d45d0); border-radius: 15px;
+      box-shadow: 0 10px 22px rgba(92, 82, 232, .26);
+    }
+    .wallet-icon { width: 23px; height: 23px; }
+    .card { background: var(--card); border: 1px solid rgba(234, 236, 243, .9); border-radius: 24px; box-shadow: var(--shadow); }
+    .balance-card {
+      position: relative; overflow: hidden; padding: 29px;
+      color: #fff; background: linear-gradient(132deg, #191b3c 0%, #3c3988 52%, #7168e9 100%);
+      border: 0;
+      box-shadow: 0 22px 42px rgba(42, 39, 117, .22);
+    }
+    .balance-card::after {
+      content: ""; position: absolute; width: 240px; height: 240px; right: -77px; top: -116px;
+      border: 30px solid rgba(255,255,255,.09); border-radius: 50%;
+    }
+    .balance-card::before {
+      content: ""; position: absolute; width: 130px; height: 130px; right: 76px; bottom: -91px;
+      background: rgba(255,255,255,.08); border-radius: 50%;
+    }
+    .balance-label { color: rgba(255,255,255,.78); font-size: 13px; }
+    .balance-heading { display: flex; align-items: center; gap: 9px; }
+    .balance-wallet {
+      width: 31px; height: 31px; display: grid; place-items: center;
+      color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.2);
+      border-radius: 10px;
+    }
+    .balance-wallet .wallet-icon { width: 18px; height: 18px; }
+    .balance { margin: 13px 0 21px; font-size: clamp(29px, 7vw, 42px); font-weight: 800; letter-spacing: -1.5px; }
+    .balance-details { display: flex; flex-wrap: wrap; gap: 8px 22px; color: rgba(255,255,255,.76); font-size: 12px; }
+    .balance-details strong { color: #fff; font-size: 13px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin: 17px 0 28px; }
+    .action {
+      display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 12px;
+      color: var(--primary); background: #fff; border: 1px solid var(--line); border-radius: 15px;
+      box-shadow: 0 7px 20px rgba(41, 47, 80, .05); font-size: 13px; font-weight: 750;
+      transition: .2s ease;
+    }
+    .action.primary { color: #fff; background: var(--primary); border-color: var(--primary); }
+    .action:hover { transform: translateY(-1px); box-shadow: 0 9px 22px rgba(41, 47, 80, .11); }
+    .section { padding: 23px; margin-top: 19px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 17px; }
+    h2 { margin: 0; font-size: 17px; letter-spacing: -.35px; }
+    .section-note { color: var(--muted); font-size: 12px; }
+    .history-icon {
+      width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 auto;
+      background: #eeedff; border-radius: 12px; font-size: 19px;
+    }
+    .submit:hover { background: var(--primary-dark); }
+    .other-head { margin-top: 24px; }
+    .plus {
+      width: 34px; height: 34px; color: #fff; background: var(--primary); border-radius: 11px;
+      font-size: 21px; line-height: 1; box-shadow: 0 7px 15px rgba(98, 88, 233, .2);
+      transition: .2s ease;
+    }
+    .plus:hover { background: var(--primary-dark); transform: scale(1.04); }
+    .list { display: grid; gap: 2px; }
+    .item {
+      display: flex; align-items: center; gap: 11px; padding: 12px 2px;
+      border-bottom: 1px solid #f0f1f5;
+      transition: background .2s ease;
+    }
+    .item:hover { background: #fafaff; }
+    .item:last-child { border-bottom: 0; }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 700; }
+    .item-meta { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .item-amount { color: var(--red); font-size: 13px; font-weight: 750; white-space: nowrap; }
+    .income-amount { color: var(--green); }
+    .empty { padding: 18px 5px 4px; color: var(--muted); text-align: center; font-size: 12px; line-height: 1.5; }
+    .history-list { display: grid; gap: 0; }
+    .history-list .item { padding: 9px 0; }
+    .history-list .history-icon { width: 32px; height: 32px; font-size: 15px; background: #eafaf4; }
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 5; place-items: center; padding: 18px;
+      background: rgba(24, 30, 50, .45); backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.show { display: grid; }
+    .modal { width: min(100%, 420px); padding: 25px; background: #fff; border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 25px 80px rgba(20,25,60,.25); }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 19px; }
+    .modal h3 { margin: 0; font-size: 19px; }
+    .close { width: 31px; height: 31px; color: var(--muted); background: #f3f4f8; border-radius: 9px; font-size: 19px; }
+    .form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: var(--muted); font-size: 12px; }
+    .field input {
+      width: 100%; padding: 13px; color: var(--text); background: #fafbfc;
+      border: 1px solid var(--line); border-radius: 12px; outline: none;
+    }
+    .field input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px #ecebff; }
+    .submit { padding: 13px; color: #fff; background: var(--primary); border-radius: 11px; font-weight: 750; }
+    @media (max-width: 540px) {
+      .app { padding: 19px 13px 35px; }
+      .topbar { margin-bottom: 19px; }
+      .brand { font-size: 19px; }
+      .actions { gap: 8px; }
+      .action { font-size: 12px; }
+      .section { padding: 17px; }
+    }
+    /* Bu qoidalar faylning oxirida turadi, shuning uchun modal va formalar ham
+       qurilmaning tungi mavzusiga to‘liq moslashadi. */
+    @media (prefers-color-scheme: dark) {
+      .balance-card {
+        background: linear-gradient(132deg, #17182f 0%, #29265f 52%, #5149b7 100%);
+      }
+      .action {
+        color: #aaa4ff;
+        background: #1c1f2d;
+        border-color: #303448;
+        box-shadow: 0 7px 20px rgba(0, 0, 0, .14);
+      }
+      .action.primary {
+        color: #fff;
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+      .history-icon { background: #2b2a50; }
+      .history-list .history-icon { background: #193c35; }
+      .item { border-color: #2d3040; }
+      .item:hover { background: #202333; }
+      .modal-backdrop { background: rgba(0, 0, 0, .62); }
+      .modal { background: #1c1f2d; border-color: #303448; }
+      .close { background: #292d3d; }
+      .field input { color: var(--text); background: #151823; border-color: #303448; }
+      .field input:focus { box-shadow: 0 0 0 3px rgba(98, 88, 233, .25); }
+    }
+    body.auth-locked { overflow: hidden; }
+    body.auth-locked .app { display: none; }
+    .lock-screen {
+      min-height: 100vh; display: grid; place-items: center; padding: 22px;
+      color: var(--text); background: var(--bg);
+    }
+    .lock-screen.hidden { display: none; }
+    .lock-card {
+      width: min(100%, 370px); padding: 31px 25px 25px; text-align: center;
+      background: var(--card); border: 1px solid var(--line); border-radius: 27px;
+      box-shadow: var(--shadow);
+    }
+    .lock-icon {
+      width: 66px; height: 66px; display: grid; place-items: center; margin: 0 auto 18px;
+      color: #fff; background: linear-gradient(145deg, #7368ff, #4d45d0);
+      border-radius: 21px; box-shadow: 0 12px 25px rgba(92, 82, 232, .26); font-size: 28px;
+    }
+    .fingerprint-icon { width: 34px; height: 34px; }
+    .lock-kicker { color: var(--primary); font-size: 12px; font-weight: 750; letter-spacing: .4px; }
+    .lock-card h1 { margin: 8px 0 10px; font-size: 23px; letter-spacing: -.6px; }
+    .lock-card p { margin: 0 auto 21px; max-width: 285px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .lock-button {
+      width: 100%; padding: 14px; color: #fff; background: var(--primary);
+      border-radius: 12px; font-weight: 750; box-shadow: 0 9px 18px rgba(98, 88, 233, .2);
+    }
+    .lock-button:hover { background: var(--primary-dark); }
+    .lock-button:disabled { cursor: not-allowed; opacity: .55; }
+    .lock-error { min-height: 18px; margin-top: 13px !important; color: var(--red) !important; font-size: 11px !important; }
+  </style>
+</head>
+<body class="auth-locked">
+  <section class="lock-screen" id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-icon" aria-hidden="true">
+        <svg class="fingerprint-icon" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4a9 9 0 0 0-9 9M16 4a9 9 0 0 1 9 9M10 15a6 6 0 0 1 12 0v3M13 15a3 3 0 0 1 6 0v6M16 10a4 4 0 0 0-4 4v4M16 7a7 7 0 0 1 7 7v4M9 21c1.8 2.5 4.1 4 7 4s5.2-1.5 7-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="lock-kicker">SHAXSIY ILOVA</div>
+      <h1>Ilova qulflangan</h1>
+      <p id="lockMessage">Kirish uchun telefoningizdagi biometrik tasdiqlashdan foydalaning.</p>
+      <button class="lock-button" id="unlockButton" type="button">Barmoq izi bilan ochish</button>
+      <p class="lock-error" id="lockError" aria-live="polite"></p>
+    </div>
+  </section>
+  <main class="app">
+    <section class="balance-card">
+      <div class="balance-label balance-heading">
+        <span class="balance-wallet" aria-label="Hamyon">
+          <svg class="wallet-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4.5 6.5h13A2.5 2.5 0 0 1 20 9v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 2 18V7.5A3.5 3.5 0 0 1 5.5 4H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 13h4M16.5 13a.5.5 0 1 0 0 1 .5-.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span>Joriy balansim</span>
+      </div>
+      <div class="balance" id="balance">0 so‘m</div>
+      <div class="balance-details">
+        <span>Kiritilgan: <strong id="totalAdded">0 so‘m</strong></span>
+        <span>Sarflangan: <strong id="totalSpent">0 so‘m</strong></span>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button class="action primary" onclick="openBalanceModal()">＋ Balansni to‘ldirish</button>
+      <button class="action" onclick="openExpenseModal()">＋ Xarajat qo‘shish</button>
+    </div>
+
+    <section class="card section">
+      <div class="section-head">
+        <h2>Xarajatlarim</h2>
+        <button class="plus" onclick="openExpenseModal()" aria-label="Xarajat qo‘shish">＋</button>
+      </div>
+      <div class="list" id="expenseList"></div>
+    </section>
+
+    <section class="card section">
+      <div class="section-head">
+        <h2>Balansga qo‘shilgan pullar</h2>
+        <span class="section-note">Tarix</span>
+      </div>
+      <div class="history-list" id="balanceHistory"></div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="balanceModal">
+    <div class="modal">
+      <div class="modal-head"><h3>Balansni to‘ldirish</h3><button class="close" onclick="closeModals()">×</button></div>
+      <form class="form" id="balanceForm">
+        <div class="field"><label for="balanceAmount">Qancha pul bor?</label><input id="balanceAmount" type="number" min="1" step="1" placeholder="Masalan: 400 000" required /></div>
+        <div class="field"><label for="balanceNote">Izoh (ixtiyoriy)</label><input id="balanceNote" type="text" placeholder="Masalan: Boshlang‘ich balans" /></div>
+        <div class="field"><label for="balanceDate">Sana</label><input id="balanceDate" type="date" required /></div>
+        <button class="submit" type="submit">Balansga qo‘shish</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="expenseModal">
+    <div class="modal">
+      <div class="modal-head"><h3>Xarajat qo‘shish</h3><button class="close" onclick="closeModals()">×</button></div>
+      <form class="form" id="expenseForm">
+        <div class="field"><label for="expenseName">Nima uchun?</label><input id="expenseName" type="text" placeholder="Masalan: Do‘kon" required /></div>
+        <div class="field"><label for="expenseAmount">Summa (so‘m)</label><input id="expenseAmount" type="number" min="1" step="1" placeholder="Masalan: 5 000" required /></div>
+        <div class="field"><label for="expenseDate">Sana</label><input id="expenseDate" type="date" required /></div>
+        <button class="submit" type="submit">Xarajatni saqlash</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCVUErEfgDtJbEuz67x7daL1GSO-zDqk40",
+      authDomain: "my-money-6f951.firebaseapp.com",
+      projectId: "my-money-6f951",
+      storageBucket: "my-money-6f951.firebasestorage.app",
+      messagingSenderId: "258792031390",
+      appId: "1:258792031390:web:36b360aaf0760f4a05e78f",
+      measurementId: "G-R8DR8W3PX6",
+      // Firebase Console dagi URL boshqacha bo‘lsa, shu manzilni o‘sha URL bilan almashtiring.
+      databaseURL: "https://my-money-6f951-default-rtdb.firebaseio.com"
+    };
+
+    let expensesRef;
+    let balancesRef;
+    let expenses = [];
+    let balanceAdds = [];
+    const ALLOWED_TELEGRAM_ID = "8768210639";
+
+    const today = () => new Date().toISOString().slice(0, 10);
+    const money = (value) => new Intl.NumberFormat("uz-UZ").format(Math.round(value)) + " so‘m";
+    const dateText = (value) => new Intl.DateTimeFormat("uz-UZ", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value + "T12:00:00"));
+    const escapeHtml = (text) => String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+
+    function setSyncStatus(type, text) {
+      // Ulanish holati foydalanuvchi interfeysida ko‘rsatilmaydi.
+    }
+
+    function unlockApp() {
+      document.body.classList.remove("auth-locked");
+      document.getElementById("lockScreen").classList.add("hidden");
+      startApp();
+    }
+
+    function getTelegramBiometric() {
+      return window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BiometricManager;
+    }
+
+    function getTelegramUserId() {
+      const telegram = window.Telegram && window.Telegram.WebApp;
+      if (!telegram) return null;
+      telegram.ready();
+      const userId = telegram.initDataUnsafe && telegram.initDataUnsafe.user
+        ? telegram.initDataUnsafe.user.id
+        : null;
+      return userId ? String(userId) : null;
+    }
+
+    function biometricName(manager) {
+      if (manager.biometricType === "finger") return "Barmoq izi bilan ochish";
+      if (manager.biometricType === "face") return "Face ID bilan ochish";
+      return "Biometrik ochish";
+    }
+
+    function authenticateWithTelegram(manager) {
+      const button = document.getElementById("unlockButton");
+      const errorText = document.getElementById("lockError");
+      button.disabled = true;
+      errorText.textContent = "";
+      manager.authenticate(
+        { reason: "My Money ilovasini ochish uchun tasdiqlang" },
+        (success) => {
+          if (success) {
+            unlockApp();
+          } else {
+            errorText.textContent = "Tasdiqlash amalga oshmadi. Qayta urinib ko‘ring.";
+            button.disabled = false;
+          }
+        }
+      );
+    }
+
+    function requestTelegramBiometric(manager) {
+      const button = document.getElementById("unlockButton");
+      const errorText = document.getElementById("lockError");
+      button.disabled = true;
+      manager.requestAccess(
+        { reason: "My Money ilovasini himoyalash uchun biometrik kirishga ruxsat bering" },
+        (granted) => {
+          if (granted) {
+            authenticateWithTelegram(manager);
+          } else {
+            errorText.textContent = "Biometrik kirishga ruxsat berilmadi.";
+            button.disabled = false;
+          }
+        }
+      );
+    }
+
+    function prepareLock() {
+      const button = document.getElementById("unlockButton");
+      const message = document.getElementById("lockMessage");
+      const userId = getTelegramUserId();
+      if (!userId) {
+        message.textContent = "Telegram foydalanuvchi hisobingiz aniqlanmadi. Ilovani bot ichidan oching.";
+        button.textContent = "Kirish mumkin emas";
+        button.disabled = true;
+        return;
+      }
+      if (userId !== ALLOWED_TELEGRAM_ID) {
+        message.textContent = "Bu shaxsiy ilova faqat egasining Telegram hisobiga ochiladi.";
+        button.textContent = "Ruxsat yo‘q";
+        button.disabled = true;
+        return;
+      }
+      const manager = getTelegramBiometric();
+      if (!manager) {
+        message.textContent = "Iltimos, ilovani Telegram bot ichidagi Web App orqali oching.";
+        button.textContent = "Telegram ichida oching";
+        button.disabled = true;
+        return;
+      }
+      manager.init(() => {
+        if (!manager.isBiometricAvailable) {
+          message.textContent = "Bu qurilmada Telegram biometrik himoyasi mavjud emas.";
+          button.textContent = "Biometrik qulf mavjud emas";
+          button.disabled = true;
+          return;
+        }
+        button.textContent = biometricName(manager);
+        message.textContent = manager.isAccessGranted
+          ? "Ilovani ochish uchun Telegram biometrik tasdiqlashidan foydalaning."
+          : "Birinchi marta Telegram biometrik himoyasiga ruxsat bering.";
+        button.addEventListener("click", () => {
+          if (manager.isAccessGranted) authenticateWithTelegram(manager);
+          else requestTelegramBiometric(manager);
+        });
+      });
+    }
+
+    function render() {
+      const totalAdded = balanceAdds.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const totalSpent = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      document.getElementById("balance").textContent = money(totalAdded - totalSpent);
+      document.getElementById("totalAdded").textContent = money(totalAdded);
+      document.getElementById("totalSpent").textContent = money(totalSpent);
+
+      const list = document.getElementById("expenseList");
+      const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date) || Number(b.created) - Number(a.created)).slice(0, 15);
+      list.innerHTML = sortedExpenses.length ? sortedExpenses.map(item => `
+        <div class="item">
+          <div class="history-icon">🛍️</div>
+          <div class="item-info"><div class="item-name">${escapeHtml(item.name)}</div><div class="item-meta">${dateText(item.date)}</div></div>
+          <div class="item-amount">− ${money(item.amount)}</div>
+        </div>`).join("") : '<div class="empty">Hali boshqa xarajat qo‘shilmagan.</div>';
+
+      const history = document.getElementById("balanceHistory");
+      const sortedBalances = [...balanceAdds].sort((a, b) => new Date(b.date) - new Date(a.date) || Number(b.created) - Number(a.created)).slice(0, 8);
+      history.innerHTML = sortedBalances.length ? sortedBalances.map(item => `
+        <div class="item">
+          <div class="history-icon">💰</div>
+          <div class="item-info"><div class="item-name">${escapeHtml(item.note || "Balans to‘ldirildi")}</div><div class="item-meta">${dateText(item.date)}</div></div>
+          <div class="item-amount income-amount">＋ ${money(item.amount)}</div>
+        </div>`).join("") : '<div class="empty">Masalan, avval 400 000 so‘m boshlang‘ich balans qo‘shing.</div>';
+    }
+
+    function openBalanceModal() {
+      document.getElementById("balanceModal").classList.add("show");
+      document.getElementById("balanceDate").value = today();
+      setTimeout(() => document.getElementById("balanceAmount").focus(), 50);
+    }
+    function openExpenseModal() {
+      document.getElementById("expenseModal").classList.add("show");
+      document.getElementById("expenseDate").value = today();
+      setTimeout(() => document.getElementById("expenseName").focus(), 50);
+    }
+    function closeModals() {
+      document.getElementById("balanceModal").classList.remove("show");
+      document.getElementById("expenseModal").classList.remove("show");
+    }
+
+    document.getElementById("balanceForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const amount = Number(document.getElementById("balanceAmount").value);
+      const item = {
+        amount,
+        note: document.getElementById("balanceNote").value.trim() || "Balans to‘ldirildi",
+        date: document.getElementById("balanceDate").value,
+        created: Date.now()
+      };
+      if (!amount || !item.date) return;
+      try {
+        await set(push(balancesRef), item);
+        event.target.reset();
+        closeModals();
+        setSyncStatus("online", "Firebase bilan ulangan");
+      } catch (error) {
+        console.error(error);
+        setSyncStatus("offline", "Saqlashda xatolik");
+        alert("Balans Firebase’ga saqlanmadi. Database URL va Rules sozlamalarini tekshiring.");
+      }
+    });
+
+    document.getElementById("expenseForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const item = {
+        type: "expense",
+        kind: "other",
+        name: document.getElementById("expenseName").value.trim(),
+        amount: Number(document.getElementById("expenseAmount").value),
+        date: document.getElementById("expenseDate").value,
+        created: Date.now()
+      };
+      if (!item.name || !item.amount || !item.date) return;
+      try {
+        await set(push(expensesRef), item);
+        event.target.reset();
+        closeModals();
+        setSyncStatus("online", "Firebase bilan ulangan");
+      } catch (error) {
+        console.error(error);
+        setSyncStatus("offline", "Saqlashda xatolik");
+        alert("Xarajat Firebase’ga saqlanmadi. Database URL va Rules sozlamalarini tekshiring.");
+      }
+    });
+
+    [document.getElementById("balanceModal"), document.getElementById("expenseModal")].forEach(modal => {
+      modal.addEventListener("click", event => { if (event.target === modal) closeModals(); });
+    });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeModals(); });
+
+    window.openBalanceModal = openBalanceModal;
+    window.openExpenseModal = openExpenseModal;
+    window.closeModals = closeModals;
+
+    function startApp() {
+      if (expensesRef) return;
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      expensesRef = ref(database, "my-money/transactions");
+      balancesRef = ref(database, "my-money/balanceAdds");
+      render();
+
+      onValue(expensesRef, snapshot => {
+        const data = snapshot.val() || {};
+        expenses = Object.entries(data)
+          .map(([id, item]) => ({ id, ...item }))
+          .filter(item => item.type !== "income");
+        render();
+      }, error => {
+        console.error(error);
+      });
+
+      onValue(balancesRef, snapshot => {
+        const data = snapshot.val() || {};
+        balanceAdds = Object.entries(data).map(([id, item]) => ({ id, ...item }));
+        render();
+      }, error => {
+        console.error(error);
+      });
+    }
+
+    prepareLock();
+  </script>
+</body>
+</html>
